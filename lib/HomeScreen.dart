@@ -1,12 +1,9 @@
 import 'dart:convert';
-import 'package:covid19/models/covid.dart';
-import 'package:covid19/models/location.dart';
 import 'package:covid19/theme.dart';
 import 'package:covid19/widgets/counter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
-import 'package:lottie/lottie.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -22,13 +19,16 @@ class _HomeScreenState extends State<HomeScreen> {
   int deaths;
   var updateDate;
   int province;
+  var allProvinceName = ["ทั้งหมด"];
   String _location = "ทั้งหมด";
 
   void initState() {
     super.initState();
     fetchCovidData();
+    fetchProvinceName();
   }
 
+// ทั้งประเทศ
   void fetchCovidData() async {
     var api = "https://covid19.th-stat.com/api/open/today";
     var response = await http.get(api);
@@ -44,6 +44,26 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+// ชื่อจังหวัดทั้งหมด
+  void fetchProvinceName() async {
+    var api = "https://covid19.th-stat.com/api/open/cases/sum";
+    var response = await http.get(api);
+    if (response.statusCode == 200) {
+      var location = json.decode(response.body);
+      var resprovinceName = location["Province"];
+      var newprovince = ["ทั้งหมด"];
+      resprovinceName.forEach((key, value) {
+        newprovince.add(key);
+        setState(() {
+          setState(() {
+            allProvinceName = newprovince;
+          });
+        });
+      });
+    }
+  }
+
+// ผู้จิดเชื้อตาม Dropdown จังหวัด
   void fetchLocationData(String value) async {
     var api = "https://covid19.th-stat.com/api/open/cases/sum";
     var response = await http.get(api);
@@ -158,14 +178,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         margin: EdgeInsets.fromLTRB(20, 0, 20, 0),
                         child: SvgPicture.asset("assets/icons/dropdown.svg")),
                     value: _location,
-                    items: [
-                      'ทั้งหมด',
-                      'Bangkok',
-                      'Samut Prakan',
-                      'Phuket',
-                      "Nonthaburi",
-                      "Nakhon Si Thammarat",
-                    ].map<DropdownMenuItem<String>>((String value) {
+                    items: allProvinceName
+                        .map<DropdownMenuItem<String>>((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
                         child: Text(value),
@@ -182,7 +196,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-
           SizedBox(height: 20),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
